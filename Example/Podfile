@@ -1,0 +1,12 @@
+use_frameworks!
+
+target 'LXRollViewController_Example' do
+  pod 'LXRollViewController', :path => '../'
+
+  target 'LXRollViewController_Tests' do
+    inherit! :search_paths
+
+    pod 'Specta'
+  pod 'Expecta'
+  end
+end
