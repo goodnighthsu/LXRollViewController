@@ -26,6 +26,11 @@ static const NSInteger kBtTag = 100;
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     self.rollInterval= 5.0;
+    self.pageHeight = 20.0;
+    
+    //Init UI
+    [self initUI];
+
 }
 
 - (void)didReceiveMemoryWarning {
@@ -33,46 +38,8 @@ static const NSInteger kBtTag = 100;
     // Dispose of any resources that can be recreated.
 }
 
-- (void)refreshWithDatas:(NSArray *)datas
-{
-    NSAssert(datas != nil && datas.count > 0, @"LXRollView refreshWitDatas: datas can not be nil!");
-
-    self.datas = [NSMutableArray arrayWithArray:datas];
-    
-    //添加两个占位 first 和 last 用来实现无限循环
-    id first  = [self.datas lastObject];
-    id last = [self.datas firstObject];
-    [self.datas insertObject:first atIndex:0];
-    [self.datas addObject:last];
-    //Ui
-    [self setupUIWithDatas:self.datas];
-    //PageController
-    if (self.pageController == nil) {
-        self.pageController = [[UIPageControl alloc] init];
-        [self.view addSubview:self.pageController];
-        [self.pageController mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.centerX.equalTo(self.view);
-            make.bottom.equalTo(self.view);
-            make.height.equalTo(@28);
-        }];
-        
-        self.autoRollTimer = [NSTimer timerWithTimeInterval:self.rollInterval target:self selector:@selector(onAutoRollTimer:) userInfo:nil repeats:YES];
-        [[NSRunLoop mainRunLoop] addTimer:self.autoRollTimer forMode:NSDefaultRunLoopMode];
-        [self.autoRollTimer fire];
-    }
-    
-    //
-    self.pageController.numberOfPages = self.datas.count -2;
-    self.pageController.currentPage = 0;
-    self.pageController.frame = CGRectZero;
-    [self.pageController sizeForNumberOfPages:self.datas.count -2];
-}
-
-
-- (void)setupUIWithDatas:(NSMutableArray *)datas
-{
-    [self.sv removeFromSuperview];
-    self.sv = nil;
+#pragma mark - UI
+- (void)initUI{
     self.sv = [[UIScrollView alloc] init];
     self.sv.pagingEnabled = YES;
     self.sv.showsHorizontalScrollIndicator = NO;
@@ -84,6 +51,61 @@ static const NSInteger kBtTag = 100;
         make.edges.equalTo(self.view);
     }];
     
+    //Page Background
+    self.pageBgView = [[UIView alloc] init];
+    self.pageBgView.backgroundColor= [UIColor colorWithRed:0 green:0 blue:0 alpha:0.3];
+    [self.view addSubview:self.pageBgView];
+    self.pageBgView.layer.cornerRadius = self.pageHeight*0.5;
+    
+    //PageController
+    self.pageController = [[UIPageControl alloc] init];
+    [self.view addSubview:self.pageController];
+    [self.pageController mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerX.equalTo(self.view);
+        make.bottom.equalTo(self.view);
+        make.height.equalTo(@(self.pageHeight));
+    }];
+    //
+    [self.pageBgView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.leading.equalTo(self.pageController).with.offset(-8);
+        make.trailing.equalTo(self.pageController).with.offset(8);
+        make.centerY.equalTo(self.pageController);
+        make.height.equalTo(@(self.pageHeight));
+    }];
+    
+    self.autoRollTimer = [NSTimer timerWithTimeInterval:self.rollInterval target:self selector:@selector(onAutoRollTimer:) userInfo:nil repeats:YES];
+    [[NSRunLoop mainRunLoop] addTimer:self.autoRollTimer forMode:NSDefaultRunLoopMode];
+    [self.autoRollTimer fire];
+}
+
+#pragma mark - Refresh Data
+- (void)refreshWithDatas:(NSArray *)datas{
+    NSAssert(datas != nil && datas.count > 0, @"LXRollView refreshWitDatas: datas can not be nil!");
+
+    self.datas = [NSMutableArray arrayWithArray:datas];
+    
+    //添加两个占位 first 和 last 用来实现无限循环
+    id first  = [self.datas lastObject];
+    id last = [self.datas firstObject];
+    [self.datas insertObject:first atIndex:0];
+    [self.datas addObject:last];
+    //SV
+    [self setupSVWithDatas:self.datas];
+    
+    //
+    self.pageController.numberOfPages = self.datas.count -2;
+    self.pageController.currentPage = 0;
+    [self.pageController sizeForNumberOfPages:self.datas.count -2];
+}
+
+
+- (void)setupSVWithDatas:(NSMutableArray *)datas{
+    //Clean Scroll View SubViews
+    for (UIView *subview in self.sv.subviews){
+        if ([subview isKindOfClass:[UIImageView class]] || [subview isKindOfClass:[UIButton class]]){
+            [subview removeFromSuperview];
+        }
+    }
     //
     UIView *lastImageView = nil;
     for (NSInteger n = 0; n < self.datas.count; n ++) {
@@ -152,6 +174,10 @@ static const NSInteger kBtTag = 100;
         
         lastImageView = imageView;
     }
+    
+    //
+    [self.view layoutIfNeeded];
+    [self.sv setContentOffset:CGPointMake(self.sv.bounds.size.width, 0) animated:NO];
 }
 
 #pragma mark - 自动滚动

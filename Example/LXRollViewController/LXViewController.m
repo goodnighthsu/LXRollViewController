@@ -36,6 +36,7 @@
         make.top.equalTo(self.view);
         make.height.equalTo(@200);
     }];
+    
     //刷新页面
     [rollVC refreshWithDatas:@[url, url1]];
 }
