@@ -113,6 +113,8 @@ static const NSInteger kBtTag = 100;
         UIView *imageView = [[UIView alloc] init];
         [self.sv addSubview:imageView];
         UIImageView *picView = [[UIImageView alloc] init];
+        picView.contentMode = UIViewContentModeScaleAspectFill;
+        picView.clipsToBounds = YES;
         picView.backgroundColor = [UIColor colorWithRed:204.0/255.0 green:204.0/255.0 blue:204.0/255.0 alpha:1.0];
         if ([content isKindOfClass:[NSURL class]]){
             NSURL *url = content;
